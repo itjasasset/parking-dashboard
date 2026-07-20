@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JAS Asset — Dashboard ภาพรวมการจอดรถ</title>
+<link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600&family=Sarabun:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --jas-red:#BB020B; --jas-red-dark:#9E0008; --jas-red-light:#E10918;
+  --jas-black:#000000; --jas-dark-grey:#1C1C1C; --jas-grey-700:#3B3D40;
+  --jas-grey-600:#53565A; --jas-grey-500:#74777B; --jas-grey-200:#D4D4D4;
+  --jas-grey-100:#F0F0F0; --jas-off-white:#F7F7F7; --jas-white:#FFFFFF;
+  --jas-font-heading:'Prompt',sans-serif; --jas-font-body:'Sarabun',sans-serif;
+  --jas-radius:10px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--jas-off-white);color:var(--jas-dark-grey);font-family:var(--jas-font-body);line-height:1.7}
+h1,h2,h3,h4,.btn,nav,.kpi-val,.tab{font-family:var(--jas-font-heading);font-weight:600}
+.wrap{max-width:1240px;margin:0 auto;padding:0 28px}
+
+/* Header */
+header{background:var(--jas-white);border-bottom:1px solid var(--jas-grey-200)}
+.hd{display:flex;align-items:center;gap:22px;padding:20px 0}
+.hd img{height:72px;width:auto}
+.hd .ti h1{font-size:30px;font-weight:600;color:var(--jas-dark-grey);letter-spacing:.2px}
+.hd .ti p{font-family:var(--jas-font-body);color:var(--jas-grey-600);font-size:15px;margin-top:2px}
+.hd .spacer{flex:1}
+.hd .range{text-align:right;font-size:13px;color:var(--jas-grey-500)}
+.hd .range b{color:var(--jas-red);font-family:var(--jas-font-heading);font-weight:600}
+
+/* coverage note */
+.note{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--jas-grey-200);
+  border-left:4px solid var(--jas-red);border-radius:var(--jas-radius);padding:14px 18px;margin:26px 0 6px;font-size:14px;color:var(--jas-grey-700)}
+.note .dia{margin-top:5px}
+
+/* diamond */
+.dia{width:9px;height:9px;background:var(--jas-red);transform:rotate(45deg);display:inline-block;flex:none}
+
+/* section titles */
+.sec-h{display:flex;align-items:center;gap:10px;margin:34px 0 16px}
+.sec-h h2{font-size:21px;font-weight:600}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:22px}
+.kpi{background:#fff;border:1px solid var(--jas-grey-200);border-radius:var(--jas-radius);padding:18px 18px 16px;position:relative}
+.kpi::before{content:"";position:absolute;top:18px;left:18px;width:8px;height:8px;background:var(--jas-red);transform:rotate(45deg)}
+.kpi .lab{font-size:12.5px;color:var(--jas-grey-600);padding-left:18px;min-height:34px}
+.kpi .kpi-val{font-size:27px;color:var(--jas-dark-grey);margin-top:6px;line-height:1.15}
+.kpi .kpi-val small{font-size:14px;color:var(--jas-grey-500);font-weight:400}
+.kpi .sub{font-size:12px;color:var(--jas-grey-500);margin-top:3px}
+
+/* card grid */
+.grid{display:grid;gap:18px;margin-top:4px}
+.g2{grid-template-columns:1fr 1fr}
+.g23{grid-template-columns:1.5fr 1fr}
+.card{background:#fff;border:1px solid var(--jas-grey-200);border-radius:var(--jas-radius);padding:20px 22px 22px}
+.card h3{font-size:16px;font-weight:600;display:flex;align-items:center;gap:9px}
+.card .cap{font-size:12.5px;color:var(--jas-grey-500);margin:3px 0 14px;padding-left:19px}
+.chart-box{position:relative;height:300px}
+.chart-box.tall{height:340px}
+
+/* toggle */
+.seg{display:inline-flex;border:1px solid var(--jas-grey-200);border-radius:8px;overflow:hidden;margin-left:auto}
+.seg button{font-family:var(--jas-font-heading);font-size:12.5px;font-weight:500;padding:6px 14px;border:none;background:#fff;color:var(--jas-grey-600);cursor:pointer}
+.seg button.on{background:var(--jas-red);color:#fff}
+.msel{font-family:var(--jas-font-heading);font-size:12.5px;font-weight:500;color:var(--jas-grey-700);border:1px solid var(--jas-grey-200);border-radius:8px;padding:6px 12px 6px 12px;background:var(--jas-white);margin-left:auto;cursor:pointer}
+.card .h-row{display:flex;align-items:center;gap:9px}
+
+/* footer */
+footer{background:var(--jas-black);color:#fff;margin-top:46px;padding:30px 0}
+footer .ft{display:flex;align-items:center;gap:18px}
+footer img{height:50px}
+footer .ft p{font-size:13px;color:#bdbdbd}
+footer .spacer{flex:1}
+footer .ft .meta{font-size:12px;color:#8d8d8d;text-align:right}
+
+@media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.g2,.g23{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <img src="https://jas-prompt-library.jasfamily.com/static/logo.png" alt="JAS Asset — Synergetic Well-being Community Builder">
+    <div class="ti">
+      <h1>Dashboard ภาพรวมการจอดรถ</h1>
+      <p>สรุปจำนวนการเข้า-ออก และรายได้ค่าจอดรถ รายสาขา · มุมมองสำหรับผู้บริหาร</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="range">
+      ข้อมูล ณ วันที่<br><b id="hdr-range">—</b>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="note">
+    <span class="dia"></span>
+    <div id="cov-note">กำลังโหลดข้อมูล…</div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpis" id="kpis"></div>
+
+  <!-- Revenue YTD + share -->
+  <div class="sec-h"><span class="dia"></span><h2>รายได้</h2></div>
+  <div class="grid g23">
+    <div class="card">
+      <div class="h-row">
+        <h3><span class="dia"></span>รายได้รายเดือน (YTD) แยกตามสาขา</h3>
+        <div class="seg" id="rev-toggle">
+          <button data-k="revenue" class="on">เก็บได้จริง</button>
+          <button data-k="fee">ค่าบริการเต็ม</button>
+        </div>
+      </div>
+      <div class="cap">เปรียบเทียบรายได้แต่ละเดือนของปี · บาท</div>
+      <div class="chart-box"><canvas id="cRev"></canvas></div>
+    </div>
+    <div class="card">
+      <h3><span class="dia"></span>สัดส่วนรายได้แต่ละสาขา</h3>
+      <div class="cap">รายได้เก็บได้จริงสะสม (YTD)</div>
+      <div class="chart-box"><canvas id="cShare"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Entries/Exits + types -->
+  <div class="sec-h"><span class="dia"></span><h2>ปริมาณการใช้งาน</h2></div>
+  <div class="card">
+    <div class="h-row">
+      <h3><span class="dia"></span>จำนวนรถเข้า-ออก แต่ละสาขา (YTD)</h3>
+      <div class="seg" id="io-toggle">
+        <button data-k="entries" class="on">รถเข้า</button>
+        <button data-k="exits">รถออก</button>
+      </div>
+    </div>
+    <div class="cap">เปรียบเทียบรายเดือน แยกตามสาขา · คัน</div>
+    <div class="chart-box"><canvas id="cInOut"></canvas></div>
+  </div>
+  <div class="card" style="margin-top:18px">
+    <div class="h-row">
+      <h3><span class="dia"></span>ประเภทผู้ใช้ แต่ละสาขา (YTD)</h3>
+      <div class="seg" id="type-toggle">
+        <button data-k="member" class="on">สมาชิก</button>
+        <button data-k="ticketless">รถทั่วไป</button>
+      </div>
+    </div>
+    <div class="cap">เปรียบเทียบรายเดือน แยกตามสาขา · คัน</div>
+    <div class="chart-box"><canvas id="cType"></canvas></div>
+  </div>
+
+  <!-- Peak hours -->
+  <div class="sec-h"><span class="dia"></span><h2>พฤติกรรมการเข้าจอด</h2></div>
+  <div class="card">
+    <div class="h-row">
+      <h3><span class="dia"></span>ช่วงเวลาที่คนเข้าจอด (Peak Hours)</h3>
+      <select class="msel" id="peak-month"></select>
+    </div>
+    <div class="cap">จำนวนรถเข้าตามชั่วโมงของวัน (รวมทุกวันในเดือนล่าสุด)</div>
+    <div class="chart-box tall"><canvas id="cPeak"></canvas></div>
+  </div>
+
+  <!-- Daily trend -->
+  <div class="card" style="margin-top:18px">
+    <div class="h-row">
+      <h3><span class="dia"></span>แนวโน้มรถเข้ารายวัน</h3>
+      <select class="msel" id="daily-month"></select>
+    </div>
+    <div class="cap">จำนวนรถเข้าต่อวัน แยกตามสาขา · คัน</div>
+    <div class="chart-box tall"><canvas id="cDaily"></canvas></div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="wrap ft">
+    <img src="https://jas-prompt-library.jasfamily.com/static/logo.png" alt="JAS Asset" style="filter:brightness(0) invert(1)">
+    <div>
+      <p>Synergetic Well-being Community Builder</p>
+    </div>
+    <div class="spacer"></div>
+    <div class="meta">Parking Operations Dashboard<br>จัดทำโดยระบบอัตโนมัติ · JAS Asset</div>
+  </div>
+</footer>
+
+<script>
+const DATA = {"Ramintra": {"6": {"revenue": 13200, "fee": 32920, "entries": 10746, "exits": 10520, "hours": {"7": 349, "8": 756, "9": 716, "13": 923, "14": 798, "16": 767, "17": 799, "18": 819, "19": 543, "20": 356, "21": 128, "23": 12, "3": 3, "6": 40, "10": 849, "11": 930, "12": 1100, "15": 805, "22": 35, "1": 5, "2": 3, "5": 7, "0": 3}, "types": {"Ticketless car": 9969, "Car Member  JAS RAMINTRA": 777}, "days": {"10": {"entries": 173, "revenue": 20}, "11": {"entries": 82, "revenue": 0}, "12": {"entries": 71, "revenue": 0}, "13": {"entries": 24, "revenue": 0}, "14": {"entries": 15, "revenue": 0}, "15": {"entries": 1007, "revenue": 1800}, "16": {"entries": 1081, "revenue": 1160}, "17": {"entries": 1078, "revenue": 1300}, "18": {"entries": 1211, "revenue": 1320}, "19": {"entries": 1256, "revenue": 1720}, "20": {"entries": 1280, "revenue": 1900}, "21": {"entries": 1475, "revenue": 2060}, "22": {"entries": 969, "revenue": 1140}, "23": {"entries": 1024, "revenue": 780}}}}, "Srinakarin": {"5": {"revenue": 68520, "fee": 131120, "entries": 42506, "exits": 41941, "hours": {"9": 1845, "10": 2636, "12": 4105, "14": 3687, "16": 3879, "17": 3980, "19": 3311, "20": 1710, "6": 257, "7": 319, "8": 881, "11": 3284, "13": 3759, "15": 3639, "18": 4210, "21": 746, "22": 242, "23": 13, "4": 1, "5": 2}, "types": {"Ticketless car": 42230, "JAS URBAN Srinakarin Underground Member": 276}, "days": {"1": {"entries": 1627, "revenue": 3500}, "2": {"entries": 1539, "revenue": 1860}, "3": {"entries": 1540, "revenue": 1700}, "4": {"entries": 1250, "revenue": 1320}, "5": {"entries": 973, "revenue": 980}, "6": {"entries": 1105, "revenue": 720}, "7": {"entries": 1014, "revenue": 1380}, "8": {"entries": 1223, "revenue": 1600}, "9": {"entries": 1611, "revenue": 2000}, "10": {"entries": 1695, "revenue": 1460}, "11": {"entries": 846, "revenue": 900}, "12": {"entries": 1032, "revenue": 1120}, "13": {"entries": 1163, "revenue": 1360}, "14": {"entries": 935, "revenue": 1040}, "15": {"entries": 1475, "revenue": 2900}, "16": {"entries": 1856, "revenue": 3340}, "17": {"entries": 1913, "revenue": 3980}, "18": {"entries": 1094, "revenue": 2060}, "19": {"entries": 1176, "revenue": 2080}, "20": {"entries": 1242, "revenue": 2260}, "21": {"entries": 1167, "revenue": 1880}, "22": {"entries": 1373, "revenue": 2340}, "23": {"entries": 1818, "revenue": 3660}, "24": {"entries": 1881, "revenue": 3520}, "25": {"entries": 1094, "revenue": 1560}, "26": {"entries": 1172, "revenue": 2080}, "27": {"entries": 1276, "revenue": 2060}, "28": {"entries": 1312, "revenue": 2320}, "29": {"entries": 1440, "revenue": 3100}, "30": {"entries": 1846, "revenue": 4460}, "31": {"entries": 1818, "revenue": 3980}}}, "6": {"revenue": 59400, "fee": 106840, "entries": 31497, "exits": 31113, "hours": {"11": 2266, "13": 2804, "14": 2763, "15": 2710, "16": 2883, "17": 3271, "19": 2446, "20": 1019, "21": 521, "22": 112, "23": 5, "6": 240, "7": 246, "8": 696, "9": 1333, "10": 1964, "12": 2948, "18": 3269, "5": 1}, "types": {"Ticketless car": 31285, "JAS URBAN Srinakarin Underground Member": 212}, "days": {"1": {"entries": 1385, "revenue": 3460}, "2": {"entries": 1235, "revenue": 2160}, "3": {"entries": 1649, "revenue": 3640}, "4": {"entries": 1029, "revenue": 1280}, "5": {"entries": 1355, "revenue": 2520}, "6": {"entries": 1775, "revenue": 2720}, "7": {"entries": 1702, "revenue": 3500}, "8": {"entries": 1015, "revenue": 1420}, "9": {"entries": 1142, "revenue": 2520}, "10": {"entries": 1163, "revenue": 2280}, "11": {"entries": 1191, "revenue": 1800}, "12": {"entries": 1363, "revenue": 1980}, "13": {"entries": 1845, "revenue": 3360}, "14": {"entries": 1786, "revenue": 3860}, "15": {"entries": 1067, "revenue": 2740}, "16": {"entries": 1207, "revenue": 2100}, "17": {"entries": 1187, "revenue": 3020}, "18": {"entries": 1182, "revenue": 2220}, "19": {"entries": 1404, "revenue": 2140}, "20": {"entries": 1830, "revenue": 3760}, "21": {"entries": 1800, "revenue": 3940}, "22": {"entries": 1041, "revenue": 1640}, "23": {"entries": 1144, "revenue": 1340}}}}};
+
+// ---- palette ----
+const RED='#BB020B', REDL='#E10918', GREY='#74777B', DARK='#1C1C1C', G200='#D4D4D4';
+const BR_COLOR = {'Ramintra':RED, 'Srinakarin':'#53565A'};
+const MONTH_TH = {5:'พ.ค.',6:'มิ.ย.',1:'ม.ค.',2:'ก.พ.',3:'มี.ค.',4:'เม.ย.',7:'ก.ค.',8:'ส.ค.',9:'ก.ย.',10:'ต.ค.',11:'พ.ย.',12:'ธ.ค.'};
+Chart.defaults.font.family="'Prompt','Sarabun',sans-serif";
+Chart.defaults.color = GREY;
+Chart.defaults.font.size = 12.5;
+const fmt = n => n.toLocaleString('en-US');
+const baht = n => '฿'+n.toLocaleString('en-US');
+
+const branches = Object.keys(DATA);
+// all months present (sorted)
+const allMonths = [...new Set(branches.flatMap(b=>Object.keys(DATA[b]).map(Number)))].sort((a,b)=>a-b);
+const latestMonth = Math.max(...allMonths);
+const AXIS = Array.from({length:12},(_,i)=>i+1);  // แสดงครบ ม.ค.-ธ.ค. เสมอ
+
+// ---- coverage note + header range ----
+(function(){
+  function rangeOf(b){
+    const ms=Object.keys(DATA[b]).map(Number).sort((a,b)=>a-b);
+    const lo=ms[0], hi=ms[ms.length-1];
+    const dlo=Object.keys(DATA[b][lo].days).map(Number).sort((a,b)=>a-b);
+    const dhi=Object.keys(DATA[b][hi].days).map(Number).sort((a,b)=>a-b);
+    return `${dlo[0]} ${MONTH_TH[lo]} – ${dhi[dhi.length-1]} ${MONTH_TH[hi]} 2569`;
+  }
+  const parts = branches.map(b=>`<b>${b}</b>: ${rangeOf(b)}`);
+  document.getElementById('cov-note').innerHTML =
+    'ช่วงข้อมูลที่มี — '+parts.join(' &nbsp;·&nbsp; ')+
+    '. ข้อมูลบางสาขายังไม่ครบเดือน (โดยเฉพาะเดือนมิถุนายนและสาขา Ramintra ที่เพิ่งเริ่มบันทึก) จึงควรพิจารณาเทียบเป็น<b>ค่าเฉลี่ยต่อวัน</b>ประกอบ';
+  document.getElementById('hdr-range').textContent = rangeOf('Srinakarin').split('–')[1].trim();
+})();
+
+// ---- KPIs ----
+(function(){
+  let entries=0, exits=0, rev=0, fee=0, days=0, member=0, total=0;
+  branches.forEach(b=>Object.values(DATA[b]).forEach(m=>{
+    entries+=m.entries; exits+=m.exits; rev+=m.revenue; fee+=m.fee;
+    days+=Object.keys(m.days).length;
+    Object.entries(m.types).forEach(([k,v])=>{ total+=v; if(!/ticketless/i.test(k)) member+=v; });
+  }));
+  const cards=[
+    {lab:'รถเข้าทั้งหมด (YTD)', val:fmt(entries), sub:'คัน · '+branches.length+' สาขา'},
+    {lab:'รายได้เก็บได้จริง (YTD)', val:baht(rev), sub:'เฉลี่ย '+baht(Math.round(rev/days))+'/วัน'},
+    {lab:'มูลค่าค่าบริการรวม', val:baht(fee), sub:'ก่อนส่วนลด/สิทธิ์จอดฟรี'},
+    {lab:'อัตรารถออก/เข้า', val:(exits/entries*100).toFixed(1)+'%', sub:fmt(exits)+' คันออก'},
+    {lab:'สัดส่วนสมาชิก', val:(member/total*100).toFixed(1)+'%', sub:fmt(member)+' จากผู้ใช้ทั้งหมด'},
+  ];
+  document.getElementById('kpis').innerHTML = cards.map(c=>
+    `<div class="kpi"><div class="lab">${c.lab}</div><div class="kpi-val">${c.val}</div><div class="sub">${c.sub}</div></div>`).join('');
+})();
+
+// ---- Revenue YTD (toggle paid/gross) ----
+let revChart;
+function drawRev(key){
+  const labels = AXIS.map(m=>MONTH_TH[m]);
+  const ds = branches.map(b=>({
+    label:b, backgroundColor:BR_COLOR[b], borderRadius:5, maxBarThickness:40,
+    data: AXIS.map(m=> DATA[b][m] ? DATA[b][m][key] : 0)
+  }));
+  if(revChart) revChart.destroy();
+  revChart = new Chart(document.getElementById('cRev'),{
+    type:'bar',
+    data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+baht(c.parsed.y)}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>'฿'+v.toLocaleString()},grid:{color:'#eee'}},x:{grid:{display:false},ticks:{autoSkip:false,maxRotation:0,minRotation:0,font:{size:11}}}}}
+  });
+}
+drawRev('revenue');
+document.querySelectorAll('#rev-toggle button').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('#rev-toggle button').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on'); drawRev(btn.dataset.k);
+});
+
+// ---- Revenue share donut ----
+(function(){
+  const vals = branches.map(b=>Object.values(DATA[b]).reduce((s,m)=>s+m.revenue,0));
+  new Chart(document.getElementById('cShare'),{
+    type:'doughnut',
+    data:{labels:branches,datasets:[{data:vals,backgroundColor:branches.map(b=>BR_COLOR[b]),borderColor:'#fff',borderWidth:3}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>{
+        const t=c.dataset.data.reduce((a,b)=>a+b,0);
+        return c.label+': '+baht(c.parsed)+' ('+(c.parsed/t*100).toFixed(1)+'%)';}}}}}
+  });
+})();
+
+// ---- In/Out grouped bar ----
+let ioChart;
+function drawIO(key){
+  const labels=AXIS.map(m=>MONTH_TH[m]);
+  const ds=branches.map(b=>({label:b,backgroundColor:BR_COLOR[b],borderRadius:5,maxBarThickness:60,
+    data:AXIS.map(m=>DATA[b][m]?DATA[b][m][key]:0)}));
+  if(ioChart)ioChart.destroy();
+  ioChart=new Chart(document.getElementById('cInOut'),{type:'bar',data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)+' คัน'}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString()},grid:{color:'#eee'}},x:{grid:{display:false},ticks:{autoSkip:false,maxRotation:0,minRotation:0,font:{size:11}}}}}});
+}
+drawIO('entries');
+document.querySelectorAll('#io-toggle button').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('#io-toggle button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');drawIO(btn.dataset.k);});
+
+// ---- User type by month / branch ----
+function typeCount(b,m,key){
+  const t=DATA[b][m]?DATA[b][m].types:{};let mem=0,tk=0;
+  Object.entries(t).forEach(([k,v])=>{/ticketless/i.test(k)?tk+=v:mem+=v;});
+  return key==='member'?mem:tk;
+}
+let typeChart;
+function drawType(key){
+  const labels=AXIS.map(m=>MONTH_TH[m]);
+  const ds=branches.map(b=>({label:b,backgroundColor:BR_COLOR[b],borderRadius:5,maxBarThickness:60,
+    data:AXIS.map(m=>typeCount(b,m,key))}));
+  if(typeChart)typeChart.destroy();
+  typeChart=new Chart(document.getElementById('cType'),{type:'bar',data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)+' คัน'}}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString()},grid:{color:'#eee'}},x:{grid:{display:false},ticks:{autoSkip:false,maxRotation:0,minRotation:0,font:{size:11}}}}}});
+}
+drawType('member');
+document.querySelectorAll('#type-toggle button').forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll('#type-toggle button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');drawType(btn.dataset.k);});
+
+// ---- Peak hours (month toggle) ----
+let peakChart;
+function drawPeak(month){
+  const labels=[...Array(24).keys()].map(h=>String(h).padStart(2,'0'));
+  const ds=branches.filter(b=>DATA[b][month]).map(b=>({
+    label:b, borderColor:BR_COLOR[b], backgroundColor:BR_COLOR[b]+'22',
+    fill:true, tension:.35, pointRadius:2, borderWidth:2.4,
+    data: labels.map((_,h)=> DATA[b][month].hours[h] || 0)
+  }));
+  if(peakChart) peakChart.destroy();
+  peakChart=new Chart(document.getElementById('cPeak'),{
+    type:'line', data:{labels,datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{title:i=>'เวลา '+i[0].label+':00 น.',label:c=>c.dataset.label+': '+fmt(c.parsed.y)+' คัน'}}},
+      scales:{y:{beginAtZero:true,grid:{color:'#eee'},title:{display:true,text:'จำนวนรถเข้า (คัน)'}},x:{grid:{display:false},title:{display:true,text:'ชั่วโมง (น.)'}}}}
+  });
+}
+(function(){
+  const sel=document.getElementById('peak-month');
+  sel.innerHTML=allMonths.map(m=>`<option value="${m}" ${m===latestMonth?'selected':''}>${MONTH_TH[m]} 2569</option>`).join('');
+  sel.onchange=()=>drawPeak(Number(sel.value));
+  drawPeak(latestMonth);
+})();
+
+// ---- Daily trend (เลือกเดือนได้) ----
+let dailyChart;
+function drawDaily(month){
+  const dmax=Math.max(...branches.filter(b=>DATA[b][month]).flatMap(b=>Object.keys(DATA[b][month].days).map(Number)));
+  const labels=[...Array(dmax).keys()].map(i=>i+1);
+  const ds=branches.filter(b=>DATA[b][month]).map(b=>({
+    label:b, borderColor:BR_COLOR[b], backgroundColor:BR_COLOR[b]+'22',
+    tension:.3, pointRadius:2.5, borderWidth:2.4, spanGaps:false,
+    data: labels.map(d=> DATA[b][month].days[d] ? DATA[b][month].days[d].entries : null)
+  }));
+  if(dailyChart) dailyChart.destroy();
+  dailyChart=new Chart(document.getElementById('cDaily'),{
+    type:'line', data:{labels:labels.map(d=>d+' '+MONTH_TH[month]),datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+      plugins:{legend:{position:'bottom'},tooltip:{callbacks:{label:c=>c.dataset.label+': '+(c.parsed.y==null?'ไม่มีข้อมูล':fmt(c.parsed.y)+' คัน')}}},
+      scales:{y:{beginAtZero:true,grid:{color:'#eee'},title:{display:true,text:'จำนวนรถเข้า (คัน)'}},x:{grid:{display:false},ticks:{autoSkip:true,maxRotation:0}}}}
+  });
+}
+(function(){
+  const sel=document.getElementById('daily-month');
+  const mwd=allMonths.filter(m=>branches.some(b=>DATA[b][m]&&Object.keys(DATA[b][m].days).length));
+  const def=mwd.includes(latestMonth)?latestMonth:mwd[mwd.length-1];
+  sel.innerHTML=mwd.map(m=>`<option value="${m}" ${m===def?'selected':''}>${MONTH_TH[m]} 2569</option>`).join('');
+  sel.onchange=()=>drawDaily(Number(sel.value));
+  drawDaily(def);
+})();
+</script>
+</body>
+</html>
