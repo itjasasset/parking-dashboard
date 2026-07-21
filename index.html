@@ -240,11 +240,11 @@ const donutLabels = {
     const total=ds.data.reduce((a,b)=>a+b,0);
     chart.getDatasetMeta(0).data.forEach((el,i)=>{
       const v=ds.data[i]; if(!v) return;
-      const pp=el.tooltipPosition();
+      const p=el.tooltipPosition();
       ctx.save();
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.font='700 16px Prompt, sans-serif'; ctx.fillStyle='#fff';
-      ctx.fillText((v/total*100).toFixed(0)+'%', pp.x, pp.y);
+      ctx.fillText((v/total*100).toFixed(0)+'%', p.x, p.y);
       ctx.restore();
     });
   }
